@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ExemploController;
+use App\Http\Controllers\LiveKitController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
@@ -30,5 +31,7 @@ Route::post('/broadcasting/auth', function (Request $request) {
     // O Laravel agora gera a assinatura criptografada e libera a porta!
     return Broadcast::auth($request);
 });
+
+Route::post('/livekit/token', [LiveKitController::class, 'gerarToken']);
 
 Route::apiResource('tarefas', ExemploController::class);

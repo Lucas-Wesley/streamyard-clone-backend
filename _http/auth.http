@@ -1,3 +1,13 @@
 ### Status da API
 GET http://localhost/api/status
 Accept: application/json
+
+
+### GERAR TOKEN
+POST http://localhost/api/livekit/token
+Content-Type: application/json
+
+{
+  "room": "sala-teste",
+  "identity": "Lucas"
+}

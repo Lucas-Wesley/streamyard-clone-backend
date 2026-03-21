@@ -65,6 +65,32 @@ services:
                 - ping
             retries: 3
             timeout: 5s
+    livekit:
+        image: livekit/livekit-server:latest
+        command: --config /etc/livekit.yaml --dev
+        ports:
+            - '7880:7880'
+            - '7881:7881'
+            - '7882:7882'
+            - '50000-50060:50000-50060/udp'
+        volumes:
+            - './docker/livekit/livekit.yaml:/etc/livekit.yaml'
+        networks:
+            - sail
+        depends_on:
+            - redis
+    livekit-proxy:
+        image: caddy:2-alpine
+        ports:
+            - '7443:7443'
+        volumes:
+            - './docker/livekit/Caddyfile:/etc/caddy/Caddyfile:ro'
+            - './docker/livekit/cert.pem:/etc/certs/cert.pem:ro'
+            - './docker/livekit/key.pem:/etc/certs/key.pem:ro'
+        networks:
+            - sail
+        depends_on:
+            - livekit
 networks:
     sail:
         driver: bridge
