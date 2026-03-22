@@ -1,12 +1,17 @@
 <?php
 
-use App\Http\Controllers\ExemploController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LiveKitController;
+use App\Http\Controllers\RoomController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Auth;
-use App\Models\User; // Mesmo sem usar o banco, usamos a classe
+use App\Models\User;
+
+// ──────────────────────────────────────────────
+// Rotas Públicas
+// ──────────────────────────────────────────────
 
 Route::get('/status', function () {
     return response()->json([
@@ -15,23 +20,34 @@ Route::get('/status', function () {
     ]);
 });
 
+// Auth (login e registro são públicas)
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
+
 // Rota customizada para liberar usuários anônimos no Reverb
 Route::post('/broadcasting/auth', function (Request $request) {
-    // Pegamos o nome que o Nuxt/Vue vai mandar no cabeçalho (ou definimos 'Anônimo')
     $userName = $request->header('X-User-Name', 'Anônimo');
 
-    // Criamos um usuário falso apenas na memória (não salva no banco)
     $fakeUser = new User();
-    $fakeUser->id = (string) crc32($request->socket_id); // Precisa ser string
+    $fakeUser->id = (string) crc32($request->socket_id);
     $fakeUser->name = $userName;
 
-    // Forçamos o Laravel a achar que este usuário está logado
     Auth::setUser($fakeUser);
 
-    // O Laravel agora gera a assinatura criptografada e libera a porta!
     return Broadcast::auth($request);
 });
 
-Route::post('/livekit/token', [LiveKitController::class, 'gerarToken']);
+// ──────────────────────────────────────────────
+// Rotas Protegidas (auth:sanctum)
+// ──────────────────────────────────────────────
 
-Route::apiResource('tarefas', ExemploController::class);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', [AuthController::class, 'user']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+
+    // Broadcasts (Rooms)
+    Route::get('/broadcasts', [RoomController::class, 'index']);
+    Route::post('/broadcasts', [RoomController::class, 'store']);
+
+    Route::post('/livekit/token', [LiveKitController::class, 'gerarToken']);
+});
