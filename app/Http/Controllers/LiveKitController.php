@@ -47,6 +47,7 @@ class LiveKitController extends Controller
 
         return response()->json([
             'token' => $token->toJwt(),
+            'url'   => config('livekit.url'),
         ]);
     }
 }

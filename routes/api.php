@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LiveKitController;
 use App\Http\Controllers\RoomController;
+use App\Models\Room;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
@@ -37,6 +38,19 @@ Route::post('/broadcasting/auth', function (Request $request) {
     return Broadcast::auth($request);
 });
 
+// Resolução de token de convidado (público)
+Route::get('/guest/{token}', function (string $token) {
+    $room = Room::where('guest_token', $token)->firstOrFail();
+
+    return response()->json([
+        'room_name' => $room->room_name,
+        'title'     => $room->title,
+    ]);
+});
+
+// Token LiveKit (público — usado tanto por host autenticado quanto por guests)
+Route::post('/livekit/token', [LiveKitController::class, 'gerarToken']);
+
 // ──────────────────────────────────────────────
 // Rotas Protegidas (auth:sanctum)
 // ──────────────────────────────────────────────
@@ -48,6 +62,4 @@ Route::middleware('auth:sanctum')->group(function () {
     // Broadcasts (Rooms)
     Route::get('/broadcasts', [RoomController::class, 'index']);
     Route::post('/broadcasts', [RoomController::class, 'store']);
-
-    Route::post('/livekit/token', [LiveKitController::class, 'gerarToken']);
 });
